@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            Register
+        </div>
+        <form class="register-form" method="POST">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="role">Role:</label>
+            <input type="text" id="role" name="role" required>
+
+            <label for="competency">Competency:</label>
+            <input type="text" id="competency" name="competency">
+            <button type="button" id="add-competency">Add Competency</button>
+
+            <div id="competencies-list"></div>
+            <input type="hidden" id="competencies" name="competencies">
+
+            <button type="submit">Register</button>
+        </form>
+        <div class="login-link">
+            <a href="{{ url_for('login') }}">Already have an account? Login here</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('add-competency').addEventListener('click', function() {
+            const competencyInput = document.getElementById('competency');
+            const competency = competencyInput.value.trim();
+
+            if (competency) {
+                const competenciesList = document.getElementById('competencies-list');
+                const competencyItem = document.createElement('div');
+                competencyItem.className = 'competency-item';
+                competencyItem.textContent = competency;
+
+                competenciesList.appendChild(competencyItem);
+
+                const hiddenInput = document.getElementById('competencies');
+                const currentCompetencies = hiddenInput.value ? hiddenInput.value.split(',') : [];
+                currentCompetencies.push(competency);
+                hiddenInput.value = currentCompetencies.join(',');
+
+                competencyInput.value = '';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome, {{ user.name }}!</h1>
+        </div>
+        <div class="profile-info">
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Role:</strong> {{ user.role }}</p>
+            <p><strong>Competencies:</strong></p>
+            <ul class="competencies-list">
+                {% for competency in user.competencies %}
+                    <li>{{ competency }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="actions">
+            <a href="{{ url_for('edit_profile') }}" class="action-button">Edit Profile</a>
+            <a href="{{ url_for('create_workspace') }}" class="action-button">Create Workspace</a>
+            <a href="{{ url_for('logout') }}" class="action-button logout">Logout</a>
+        </div>
+
+        <div class="section">
+            <h2>Your Workspaces (as Creator)</h2>
+            <ul class="workspaces-list">
+                {% for workspace in workspaces %}
+                    <li>
+                        {{ workspace.workspace_name }}
+                        {% if workspace.creator_email == user.email %}
+                            <a href="{{ url_for('edit_workspace', workspace_name=workspace.workspace_name) }}" class="edit-link">Edit</a>
+                        {% endif %}
+                        <a href="{{ url_for('view_workspace', workspace_name=workspace.workspace_name) }}" class="view-link">View</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Your Workspaces (as Member)</h2>
+            <ul class="workspaces-list">
+                {% for workspace in member_workspaces %}
+                    {% if workspace.workspace_name not in created_workspaces %}
+                        <li>
+                            {{ workspace.workspace_name }}
+                            <a href="{{ url_for('view_workspace', workspace_name=workspace.workspace_name) }}" class="view-link">View</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Invitations</h2>
+            <ul class="invitations-list">
+                {% for invitation in invitations %}
+                    <li>
+                        Invitation to join workspace "{{ invitation.workspace_name }}"
+                        <form method="POST" action="{{ url_for('accept_invitation', workspace_name=invitation.workspace_name) }}">
+                            <button type="submit" class="accept-button">Accept</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('reject_invitation', workspace_name=invitation.workspace_name) }}">
+                            <button type="submit" class="reject-button">Reject</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

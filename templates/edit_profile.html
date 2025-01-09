@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='edit_profile.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Edit Profile</h1>
+        </div>
+        <form method="POST" class="form">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="{{ user.name }}" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+
+            <label for="role">Role:</label>
+            <input type="text" id="role" name="role" value="{{ user.role }}" required>
+
+            <h2>Competencies</h2>
+            <ul class="competencies-list">
+                {% for competency in user.competencies %}
+                    <li>
+                        {{ competency }}
+                        <a href="{{ url_for('delete_competency', competency=competency) }}" class="delete-link">Delete</a>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <h3>Add Competency</h3>
+            <label for="new_competency">New Competency:</label>
+            <input type="text" id="new_competency" name="new_competency">
+
+            <button type="submit">Save Changes</button>
+        </form>
+        <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
+    </div>
+</body>
+</html>

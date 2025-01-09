@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Workspace</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='create_workspace.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Create Workspace</h1>
+        </div>
+        <form method="POST" class="form">
+            <label for="workspace_name">Workspace Name:</label>
+            <input type="text" id="workspace_name" name="workspace_name" required>
+
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" required>
+
+            <label for="project_description">Project Description:</label>
+            <input type="text" id="project_description" name="project_description" required>
+
+            <button type="submit">Create Workspace</button>
+        </form>
+        <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
+    </div>
+</body>
+</html>

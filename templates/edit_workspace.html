@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Workspace</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='edit_workspace.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Edit Workspace</h1>
+        </div>
+        <form method="POST" class="form">
+            <label for="workspace_name">Workspace Name:</label>
+            <input type="text" id="workspace_name" name="workspace_name" value="{{ workspace.workspace_name }}" required>
+
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" value="{{ workspace.description }}" required>
+
+            <label for="project_description">Project Description:</label>
+            <input type="text" id="project_description" name="project_description" value="{{ workspace.project_description }}" required>
+
+            <button type="submit">Save Changes</button>
+        </form>
+
+        <div class="section">
+            <h2>Invite Member</h2>
+            <form method="POST" action="{{ url_for('invite_member', workspace_name=workspace.workspace_name) }}" class="form">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <button type="submit">Invite</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Members</h2>
+            <ul class="members-list">
+                {% for member in members %}
+                    <li>
+                        <p><strong>Name:</strong> {{ member.name }}</p>
+                        <p><strong>Email:</strong> {{ member.email }}</p>
+                        <p><strong>Role:</strong> {{ member.role }}</p>
+                        <p><strong>Competencies:</strong> {{ member.competencies }}</p>
+                        <p><strong>Created At:</strong> {{ member.created_at }}</p>
+                        <p><strong>Updated At:</strong> {{ member.updated_at }}</p>
+                        {% if workspace.creator_email == session['email'] and member.email != session['email'] %}
+                            <form method="POST" action="{{ url_for('remove_member', workspace_name=workspace.workspace_name, email=member.email) }}">
+                                <button type="submit" class="remove-button">Remove Member</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Delete Workspace</h2>
+            <form method="POST" action="{{ url_for('delete_workspace', workspace_name=workspace.workspace_name) }}">
+                <button type="submit" class="delete-button">Delete Workspace</button>
+            </form>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
+    </div>
+</body>
+</html>

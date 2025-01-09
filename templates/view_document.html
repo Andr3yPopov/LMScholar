@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='view_document.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Document: {{ document_name }}</h1>
+        </div>
+        <div class="document-content">
+            <pre>{{ document_content }}</pre>
+        </div>
+        <a href="{{ url_for('view_workspace', workspace_name=workspace_name) }}" class="back-link">Back to Workspace</a>
+    </div>
+</body>
+</html>

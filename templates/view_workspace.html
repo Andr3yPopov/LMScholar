@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Workspace</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='view_workspace.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Workspace: {{ workspace_info.workspace_name }}</h1>
+        </div>
+        <div class="workspace-info">
+            <p><strong>Description:</strong> {{ workspace_info.description }}</p>
+            <p><strong>Project Description:</strong> {{ workspace_info.project_description }}</p>
+            <p><strong>Creator Email:</strong> {{ workspace_info.creator_email }}</p>
+            <p><strong>Created At:</strong> {{ workspace_info.created_at }}</p>
+            <p><strong>Updated At:</strong> {{ workspace_info.updated_at }}</p>
+        </div>
+
+        <div class="section">
+            <h2>Members</h2>
+            <ul class="members-list">
+                {% for member in workspace_info.members %}
+                    <li>
+                        <p><strong>Name:</strong> {{ member.name }}</p>
+                        <p><strong>Email:</strong> {{ member.email }}</p>
+                        <p><strong>Role:</strong> {{ member.role }}</p>
+                        <p><strong>Competencies:</strong></p>
+                        <ul class="competencies-list">
+                            {% for competency in member.competencies %}
+                                <li>{{ competency }}</li>
+                            {% endfor %}
+                        </ul>
+                        <p><strong>Created At:</strong> {{ member.created_at }}</p>
+                        <p><strong>Updated At:</strong> {{ member.updated_at }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Documents</h2>
+            <ul class="documents-list">
+                {% for document in workspace_info.documents %}
+                    <li>
+                        <a href="{{ url_for('view_document', workspace_name=workspace_info.workspace_name, document_name=document.document_name) }}" class="document-link">View {{ document.document_name }}</a>
+                        <a href="{{ url_for('download_document', workspace_name=workspace_info.workspace_name, document_name=document.document_name) }}" class="download-link">Download {{ document.document_name }}</a>
+                        {% if document.creator_email == session['email'] %}
+                            <form method="POST" action="{{ url_for('delete_document', workspace_name=workspace_info.workspace_name, document_name=document.document_name) }}">
+                                <button type="submit" class="delete-button">Delete Document</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Articles</h2>
+            <ul id="articles-list" class="articles-list">
+                {% for article in workspace_info.articles %}
+                    <li>
+                        <a href="{{ article.document_url }}" target="_blank" class="article-link">{{ article.document_name }}</a>
+                        {% if article.creator_email == session['email'] %}
+                            <form method="POST" action="{{ url_for('delete_article', workspace_name=workspace_info.workspace_name, article_name=article.document_name) }}">
+                                <button type="submit" class="delete-button">Delete Article</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Upload Document</h2>
+            <form method="POST" action="{{ url_for('upload_document', workspace_name=workspace_info.workspace_name) }}" enctype="multipart/form-data" class="upload-form">
+                <label for="document">Document:</label>
+                <input type="file" id="document" name="document" required>
+                <button type="submit" class="upload-button">Upload Document</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Search and Download Articles</h2>
+            <form id="search-articles-form" class="search-form">
+                <label for="topic">Topic:</label>
+                <input type="text" id="topic" name="topic" required>
+                <label for="year">Year:</label>
+                <input type="number" id="year" name="year" required>
+                <label for="max_results">Max Results:</label>
+                <input type="number" id="max_results" name="max_results" required>
+                <button type="submit" class="search-button">Search and Download</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Chat</h2>
+            <a href="{{ url_for('chat', workspace_name=workspace_info.workspace_name) }}" class="chat-link">Go to Chat</a>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#search-articles-form').on('submit', function(e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+                $.ajax({
+                    url: "{{ url_for('search_articles', workspace_name=workspace_info.workspace_name) }}",
+                    type: "POST",
+                    data: formData,
+                    success: function(response) {
+                        $('#articles-list').html(response);
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Error: " + error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

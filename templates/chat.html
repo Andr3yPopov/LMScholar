@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Analysis Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            Document Analysis Chat for workspace: {{ workspace_name }}
+        </div>
+
+        <div class="chat-box" id="chat-box">
+            {% if chat_history %}
+                {% for message in chat_history %}
+                    <div class="message {{ 'user' if message.role == 'user' else 'bot' }}">
+                        <div class="message-content">{{ message.content | replace('\n', '<br>') | safe }}</div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="loading-indicator" id="loading-indicator">
+            Processing your request...
+        </div>
+
+        <div class="controls">
+            <details class="document-selector">
+                <summary>Select Documents and Articles</summary>
+                <ul>
+                    <h3>Documents</h3>
+                    {% for document in documents %}
+                        <li>
+                            <input type="checkbox" id="document_{{ document.document_name }}" name="document_ids" value="{{ document.document_name }}">
+                            <label for="document_{{ document.document_name }}">{{ document.document_name }}</label>
+                        </li>
+                    {% endfor %}
+
+                    <h3>Articles</h3>
+                    {% for article in articles %}
+                        <li>
+                            <input type="checkbox" id="article_{{ article.document_name }}" name="article_ids" value="{{ article.document_name }}">
+                            <label for="article_{{ article.document_name }}">{{ article.document_name }}</label>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </details>
+
+            <details class="chain-selector">
+                <summary>Select Reasoning Chain</summary>
+                <div class="chain-builder">
+                    <div class="chain-tools">
+                        <h3>Available Tools</h3>
+                        <ul>
+                            <li>
+                                <button onclick="addToolToChain('Idea generation')">Add Idea Generation</button>
+                            </li>
+                            <li>
+                                <button onclick="addToolToChain('Article analysis')">Add Article Analysis</button>
+                            </li>
+                            <li>
+                                <button onclick="addToolToChain('Deconstruction')">Add Deconstruction</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="chain-display">
+                        <h3>Current Chain</h3>
+                        <ul id="chain-list"></ul>
+                    </div>
+                    <div class="chain-save">
+                        <h3>Save Results</h3>
+                        <ul id="save-list"></ul>
+                    </div>
+                </div>
+            </details>
+
+            <textarea id="query" placeholder="Enter your query..." rows="3"></textarea>
+
+            <label>
+                <input type="checkbox" name="advanced_mode" id="advanced_mode">
+                Advanced Mode
+            </label>
+
+            <button onclick="sendMessage()">Send</button>
+
+            <div class="chat-management">
+                <h3>Chat Management</h3>
+                <button onclick="clearChat()">Clear Chat</button>
+                <button onclick="deleteChatHistory()">Delete Chat History</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        let chain = []; 
+
+        function addToolToChain(tool) {
+            chain.push(tool);
+            updateChainDisplay();
+        }
+
+        function updateChainDisplay() {
+            const chainList = document.getElementById('chain-list');
+            chainList.innerHTML = ''; 
+
+            chain.forEach((tool, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${tool}`;
+                chainList.appendChild(li);
+            });
+
+            updateSaveList();
+        }
+		
+        function updateSaveList() {
+            const saveList = document.getElementById('save-list');
+            saveList.innerHTML = ''; 
+
+            chain.forEach((tool, index) => {
+                const li = document.createElement('li');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `save_${index}`;
+                checkbox.name = 'save_results';
+                checkbox.value = tool;
+
+                const label = document.createElement('label');
+                label.htmlFor = `save_${index}`;
+                label.textContent = `Save ${tool} Results`;
+
+                li.appendChild(checkbox);
+                li.appendChild(label);
+                saveList.appendChild(li);
+            });
+        }
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            const formattedContent = content.replace(/\n/g, '<br>');
+            contentDiv.innerHTML = formattedContent;
+
+            messageDiv.appendChild(contentDiv);
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const query = document.getElementById('query').value;
+            if (!query) return;
+
+            const selectedDocuments = Array.from(document.querySelectorAll('input[name="document_ids"]:checked')).map(input => input.value);
+            const selectedArticles = Array.from(document.querySelectorAll('input[name="article_ids"]:checked')).map(input => input.value);
+            const advancedMode = document.getElementById('advanced_mode').checked;
+
+            const saveResults = Array.from(document.querySelectorAll('input[name="save_results"]:checked')).map(input => input.value);
+
+            addMessage('user', query);
+
+            document.getElementById('query').value = '';
+
+            loadingIndicator.style.display = 'block';
+
+            try {
+                const response = await fetch(`/chat/{{ workspace_name }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        query,
+                        document_ids: selectedDocuments,
+                        article_ids: selectedArticles,
+                        advanced_mode: advancedMode ? 'on' : 'off',
+                        chain: JSON.stringify(chain), // Отправляем цепочку
+                        save_results: JSON.stringify(saveResults), // Отправляем результаты для сохранения
+                    }),
+                });
+
+                if (response.ok) {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
+
+                    const botMessageDiv = document.createElement('div');
+                    botMessageDiv.className = 'message bot';
+                    const botContentDiv = document.createElement('div');
+                    botContentDiv.className = 'message-content';
+                    botMessageDiv.appendChild(botContentDiv);
+                    chatBox.appendChild(botMessageDiv);
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
+
+                        const formattedChunk = chunk.replace(/\n/g, '<br>');
+                        botContentDiv.innerHTML += formattedChunk;
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                } else {
+                    addMessage('bot', 'Error: Unable to fetch analysis results.');
+                }
+            } catch (error) {
+                addMessage('bot', 'Error: ' + error.message);
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function clearChat() {
+            chatBox.innerHTML = '';
+        }
+        function deleteChatHistory() {
+            if (confirm("Are you sure you want to delete the chat history? This action cannot be undone.")) {
+                fetch(`/delete_chat_history/{{ workspace_name }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }).then(response => {
+                    if (response.ok) {
+                        clearChat();
+                        alert("Chat history deleted successfully.");
+                    } else {
+                        alert("Failed to delete chat history.");
+                    }
+                }).catch(error => {
+                    alert("Error: " + error.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
